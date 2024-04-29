@@ -10,7 +10,10 @@ import org.kohsuke.stapler.AncestorInPath;
 
 import java.util.*;
 
-
+/**
+ * Mainly is checking the configurations in ClaimConfig and adjustes the text representation.
+ * Gives a List of Assignees or Errors that are available
+ */
 public abstract class DescribableTestAction extends TestAction implements Describable<DescribableTestAction> {
 
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -29,9 +32,12 @@ public abstract class DescribableTestAction extends TestAction implements Descri
         public String getDisplayName() {
             return "Assignee";
         }
-
+/**
+ * Returns a list of all Users, the logged in user is the first and then the others sorted by name or id, depending on the settings in ClaimConfig
+ * @return ListBoxModel containing UserDisplayName and Id of all users, the loged in user at the top and then sorted by either Id or fullName depending on the settings of ClaimConfig
+ */
         @SuppressWarnings("lgtm[jenkins/csrf]")
-        public ListBoxModel doFillAssigneeItems() {
+        public ListBoxModel doFillAssigneeItems() { 
             Jenkins.get().checkPermission(Jenkins.READ);
 
             ListBoxModel items = new ListBoxModel();
@@ -60,6 +66,11 @@ public abstract class DescribableTestAction extends TestAction implements Descri
             return items;
         }
 
+        /**
+         * Returns only the fullName or the fullName and email of a User depending on the Settings of ClaimConfig
+         * @param user
+         * @return String with Username or 'Username Email'
+         */
         private static String getUserDisplayName(User user) {
             StringBuilder sb = new StringBuilder(user.getDisplayName());
             if(ClaimConfig.get().isEmailDisplayedForAssigneesList()) {
@@ -71,6 +82,13 @@ public abstract class DescribableTestAction extends TestAction implements Descri
             return sb.toString();
         }
 
+        /**
+         * Fills the list of available Errors to select.
+         * BuildFailureAnalyzer must be enabled for this
+         * @param run
+         * @return
+         * @throws Exception
+         */
         @SuppressWarnings("lgtm[jenkins/csrf]")
         public ListBoxModel doFillErrorsItems(@AncestorInPath Run run) throws Exception {
             Jenkins.get().checkPermission(Jenkins.READ);
@@ -100,7 +118,10 @@ public abstract class DescribableTestAction extends TestAction implements Descri
             return items;
         }
     }
-
+    /**
+     * 
+     * @return Name or Id comperator depending on the settings of ClaimConfig
+     */
     private static Comparator<? super User> getComparator() {
         if (ClaimConfig.get().isSortUsersByFullName()) {
             return fullNameComparator;

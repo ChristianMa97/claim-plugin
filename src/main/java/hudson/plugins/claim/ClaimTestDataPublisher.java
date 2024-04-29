@@ -24,7 +24,9 @@ public class ClaimTestDataPublisher extends TestDataPublisher {
     public ClaimTestDataPublisher() {
         // nothing to do
     }
-
+    /**
+     * Takes care of sticky claims, next CaseResult will get the claim copied if sticky is checked.
+     */
     @Override
     public Data contributeTestData(Run<?, ?> run, @NonNull FilePath workspace, Launcher launcher,
                                    TaskListener listener, TestResult testResult)

@@ -28,6 +28,12 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Holds information about the claim like who assigned it, who claimed it, is it claimed..
+ * Also offers the functionallity to claim and unclaim
+ * Also offers REST API Endpoints to claim and unclaim
+ * Option to copy claim information from one AbstractClaimBuildAction to another AbstractClaimBuildAction
+ */
 @ExportedBean(defaultVisibility = 2)
 public abstract class AbstractClaimBuildAction<T extends Saveable>
         extends DescribableTestAction
@@ -68,6 +74,12 @@ public abstract class AbstractClaimBuildAction<T extends Saveable>
 
     abstract String getUrl();
 
+    /**
+     * Method to do a claim by REST API, calls the internal claim Method
+     * @param req containing assignee (userId), reason, errors, sticky (true/false), propagateToFollowingBuilds(true/false)
+     * @param resp
+     * @throws Exception
+     */
     // jelly
     @POST
     public final void doClaim(StaplerRequest req, StaplerResponse resp)
@@ -78,6 +90,7 @@ public abstract class AbstractClaimBuildAction<T extends Saveable>
         User claimedUser = currentUser; // Default to self-assignment
         String assignee = req.getSubmittedForm().getString("assignee");
 
+        //If the assignee and currentUser are not the same, find the user of the assignee String from Id
         if (!StringUtils.isEmpty(assignee)  && !claimedUser.getId().equals(assignee)) {
             // Validate the specified assignee.
             User resolvedAssignee = getUserFromId(assignee, false);
@@ -89,11 +102,11 @@ public abstract class AbstractClaimBuildAction<T extends Saveable>
             claimedUser = resolvedAssignee;
         }
         String reasonProvided = req.getSubmittedForm().getString("reason");
-
+        //Create a failACtion if possible from the errors given in the request
         if (ClaimBuildFailureAnalyzer.isBFAEnabled()) {
             String error = req.getSubmittedForm().getString("errors");
             bfaClaimer = new ClaimBuildFailureAnalyzer(error);
-            if (getOwner() instanceof Run) {
+            if (getOwner() instanceof Run) { //getOwner is implemented in a child class
                 Run run = (Run) getOwner();
                 if (!bfaClaimer.isDefaultError()) {
                     try {
@@ -195,6 +208,13 @@ public abstract class AbstractClaimBuildAction<T extends Saveable>
 
     protected abstract Optional<AbstractClaimBuildAction> getNextAction();
 
+    /**
+     * Do a Unclaim from the REST API, calls unclaim internally, no notification
+     * @param req empty
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
     // jelly
     @POST
     public final void doUnclaim(StaplerRequest req, StaplerResponse resp)
